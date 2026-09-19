@@ -83,11 +83,42 @@ class MainActivity : ComponentActivity() {
         // SABSE PEHLE: crash logger (taaki koi bhi crash save ho jaye)
         CrashLogger.install(this)
 
+        // Agar pichli baar crash hua to POORA crash screen dikhao (plain views,
+        // yeh kabhi crash nahi karega - Compose ke bina)
+        val savedCrash = CrashLogger.last(this)
+        if (savedCrash != null && intent.getStringExtra("retry") == null) {
+            CrashRecovery.show(this, savedCrash) {
+                val i = Intent(this, MainActivity::class.java).putExtra("retry", "1")
+                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(i)
+                finish()
+            }
+            return
+        }
+
+        try {
+            onCreateSafe()
+        } catch (t: Throwable) {
+            // Kuch bhi ho (Compose, TTS, koi library) - log save + crash screen
+            CrashLogger.save(this, Thread.currentThread(), t)
+            try {
+                CrashRecovery.show(this, CrashLogger.last(this) ?: "Unknown crash: $t") {
+                    val i = Intent(this, MainActivity::class.java).putExtra("retry", "1")
+                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(i)
+                    finish()
+                }
+            } catch (_: Throwable) {
+            }
+        }
+    }
+
+    private fun onCreateSafe() {
         tts = try {
             TextToSpeech(this) { status ->
                 if (status == TextToSpeech.SUCCESS) tts?.language = Locale("hi", "IN")
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             addSystem("⚠️ TTS engine nahi mila (voice replies nahi honge): ${e.message}")
             null
         }
