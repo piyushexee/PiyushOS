@@ -1,12 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.compose")
-}
-
-// Kotlin 1.9.24 ke liye compatible Compose Compiler version
-compose {
-    kotlinCompilerPluginVersion = "1.5.10"
 }
 
 android {
@@ -33,8 +27,13 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    // NB: buildFeatures.compose yahan nahi chahiye - org.jetbrains.compose plugin
-    // khud Android ke liye compose build feature enable kar deta hai
+    buildFeatures {
+        compose = true
+    }
+    // Kotlin 1.9.24 <-> Compose Compiler 1.5.10 (official compatibility mapping)
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.10"
+    }
 }
 
 dependencies {
