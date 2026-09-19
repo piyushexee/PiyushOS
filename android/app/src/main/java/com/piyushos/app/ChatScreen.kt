@@ -84,7 +84,10 @@ fun ChatScreen(
                 .fillMaxWidth()
                 .padding(bottom = 10.dp)
         ) {
-            Text("🧠 PiyushOS", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "🧠 PiyushOS v${BuildConfig.VERSION_NAME}",
+                color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold
+            )
             Spacer(Modifier.weight(1f))
             if (connected) {
                 Text("● Online", color = GreenText, fontSize = 13.sp)

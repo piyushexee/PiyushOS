@@ -15,8 +15,12 @@ import java.util.Locale
 object CrashLogger {
     private const val PREFS = "piyushos"
     private const val KEY = "last_crash_log"
+    @Volatile
+    private var installed = false
 
     fun install(context: Context) {
+        if (installed) return
+        installed = true
         val appContext = context.applicationContext
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, ex ->

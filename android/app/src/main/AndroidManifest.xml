@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".PiyushApp"
         android:label="PiyushOS"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
@@ -51,6 +52,13 @@
              ML Kit ab LAZY init hoga - pehle OCR use hone par. -->
         <provider
             android:name="com.google.mlkit.common.internal.MlKitInitProvider"
+            tools:node="remove" />
+
+        <!-- AndroidX ka auto-startup provider bhi HATA di (emoji2/lifecycle/profileinstaller).
+             Ab app khulte waqt sirf PIYUSHOS ki apni code chalti hai - koi bhi third-party
+             auto-init nahi. Isse "startup crash" ki possibility sabse kam ho jaati hai. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
             tools:node="remove" />
 
     </application>
