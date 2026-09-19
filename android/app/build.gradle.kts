@@ -30,9 +30,9 @@ android {
     buildFeatures {
         compose = true
     }
-    // Kotlin 1.9.24 <-> Compose Compiler 1.5.10 (official compatibility mapping)
+    // Kotlin 1.9.24 <-> Compose Compiler 1.5.14 (official compatibility mapping)
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.10"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 }
 
