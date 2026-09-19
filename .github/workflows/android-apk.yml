@@ -43,9 +43,12 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: List built APK
+      - name: Rename APK with version (PiyushOS-v1.3.apk)
         working-directory: android
-        run: ls -lh app/build/outputs/apk/debug/
+        run: |
+          V=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/PiyushOS-v${V}.apk"
+          ls -lh app/build/outputs/apk/debug/
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4

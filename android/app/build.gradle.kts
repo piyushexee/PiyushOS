@@ -37,16 +37,6 @@ android {
     }
 }
 
-// APK ka naam version ke saath (PiyushOS-v1.3.apk) - galti se purana file
-// install na ho sake
-androidComponents {
-    onVariants { variant ->
-        variant.outputs.forEach { output ->
-            output.outputFileName.set("PiyushOS-v${variant.versionName.get()}.apk")
-        }
-    }
-}
-
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.05.00"))
     implementation("androidx.compose.ui:ui")
