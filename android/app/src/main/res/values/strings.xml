@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_desc">PiyushOS yeh service use karke aapke phone par tap, swipe, typing aur app kholna karta hai jab aap use koi command dete ho. Koi bhi data kisi third party par nahi jaata - sab aapke apne private server par jata hai.</string>
+</resources>

@@ -1,0 +1,34 @@
+# ---------- Python ----------
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+
+# ---------- Generated files (server) ----------
+brain/generated/
+out/
+
+# ---------- Secrets ----------
+.env
+
+# ---------- Android / Gradle ----------
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+.gradle/
+
+# ---------- IDE ----------
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# ---------- Misc ----------
+*.log
+out/
