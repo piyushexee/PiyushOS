@@ -1,7 +1,12 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.compose")
+}
+
+// Kotlin 1.9.24 ke liye compatible Compose Compiler version
+compose {
+    kotlinCompilerPluginVersion = "1.5.10"
 }
 
 android {
