@@ -17,6 +17,13 @@
         android:usesCleartextTraffic="true"
         android:allowBackup="true">
 
+        <!-- SABSE PEHLI app code: crash handler + boot canary (Application se bhi pehle) -->
+        <provider
+            android:name=".CrashGuardProvider"
+            android:authorities="com.piyushos.app.crashguard"
+            android:exported="false"
+            android:initOrder="1" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
