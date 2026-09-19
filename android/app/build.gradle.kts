@@ -29,6 +29,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     // Kotlin 1.9.24 <-> Compose Compiler 1.5.14 (official compatibility mapping)
     composeOptions {
