@@ -33,9 +33,8 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    buildFeatures {
-        compose = true
-    }
+    // NB: buildFeatures.compose yahan nahi chahiye - org.jetbrains.compose plugin
+    // khud Android ke liye compose build feature enable kar deta hai
 }
 
 dependencies {
