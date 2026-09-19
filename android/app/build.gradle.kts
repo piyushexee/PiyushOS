@@ -11,8 +11,8 @@ android {
         applicationId = "com.piyushos.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
     }
 
     buildTypes {
@@ -34,6 +34,16 @@ android {
     // Kotlin 1.9.24 <-> Compose Compiler 1.5.14 (official compatibility mapping)
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
+    }
+}
+
+// APK ka naam version ke saath (PiyushOS-v1.3.apk) - galti se purana file
+// install na ho sake
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("PiyushOS-v${variant.versionName.get()}.apk")
+        }
     }
 }
 

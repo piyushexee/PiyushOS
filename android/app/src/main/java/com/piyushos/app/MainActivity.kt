@@ -394,9 +394,21 @@ class MainActivity : ComponentActivity() {
 
     private fun addSystem(text: String) = addMsg(Role.SYSTEM, text)
 
-    private fun load(key: String, def: String): String =
+    private fun load(key: String, def: String): String = try {
         getSharedPreferences("piyushos", MODE_PRIVATE).getString(key, def) ?: def
+    } catch (t: Throwable) {
+        // prefs corrupt ho toh reset karke default use karo (kabhi crash nahi)
+        try {
+            getSharedPreferences("piyushos", MODE_PRIVATE).edit().clear().commit()
+        } catch (_: Throwable) {
+        }
+        def
+    }
 
-    private fun save(key: String, value: String) =
-        getSharedPreferences("piyushos", MODE_PRIVATE).edit().putString(key, value).apply()
+    private fun save(key: String, value: String) {
+        try {
+            getSharedPreferences("piyushos", MODE_PRIVATE).edit().putString(key, value).apply()
+        } catch (_: Throwable) {
+        }
+    }
 }

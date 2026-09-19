@@ -3,18 +3,25 @@ package com.piyushos.app
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
  * Built-in crash logger - PC/adb ke bina bhi crash samajhne ke liye.
- * Crash hua toh stack trace + device info save hota hai, aur agli baar app
- * kholne par POORA crash screen dikh jata hai (Copy / WhatsApp share button ke saath).
+ *
+ * Log do jagah save hota hai (double safety):
+ *  1. File: /data/data/com.piyushos.app/files/crash.log  (PRIMARY - reliable)
+ *  2. SharedPreferences (backup)
+ *
+ * Agli baar app kholte hi poora crash screen dikh jata hai
+ * (Copy / WhatsApp share button ke saath).
  */
 object CrashLogger {
     private const val PREFS = "piyushos"
     private const val KEY = "last_crash_log"
+    private const val FILE = "crash.log"
     @Volatile
     private var installed = false
 
@@ -25,12 +32,7 @@ object CrashLogger {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, ex ->
             val log = format(appContext, thread, ex)
-            try {
-                Log.e("PiyushOS_CRASH", log)
-                appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                    .edit().putString(KEY, log).apply()
-            } catch (_: Exception) {
-            }
+            write(appContext, log)
             // original handler ko pass karo (app waise hi band hoga)
             if (previous != null) previous.uncaughtException(thread, ex) else throw ex
         }
@@ -38,10 +40,22 @@ object CrashLogger {
 
     /** Explicit crash save (onCreate me catch hua to bhi yahi use hoga). */
     fun save(context: Context, thread: Thread, ex: Throwable) {
+        write(context, format(context, thread, ex))
+    }
+
+    private fun write(ctx: Context, log: String) {
         try {
-            val log = format(context.applicationContext, thread, ex)
             Log.e("PiyushOS_CRASH", log)
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        } catch (_: Exception) {
+        }
+        // 1) file (primary)
+        try {
+            File(ctx.filesDir, FILE).writeText(log)
+        } catch (_: Exception) {
+        }
+        // 2) prefs (backup)
+        try {
+            ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .edit().putString(KEY, log).apply()
         } catch (_: Exception) {
         }
@@ -75,10 +89,32 @@ object CrashLogger {
         return sb.toString()
     }
 
-    fun last(context: Context): String? =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null)
+    fun last(context: Context): String? {
+        // file (primary)
+        try {
+            val f = File(context.filesDir, FILE)
+            if (f.exists()) {
+                val t = f.readText()
+                if (t.isNotBlank()) return t
+            }
+        } catch (_: Exception) {
+        }
+        // prefs (backup)
+        return try {
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null)
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     fun clear(context: Context) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(KEY).apply()
+        try {
+            File(context.filesDir, FILE).delete()
+        } catch (_: Exception) {
+        }
+        try {
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(KEY).apply()
+        } catch (_: Exception) {
+        }
     }
 }
