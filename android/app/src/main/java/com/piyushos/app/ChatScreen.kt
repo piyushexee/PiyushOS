@@ -2,6 +2,7 @@ package com.piyushos.app
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
@@ -58,6 +60,9 @@ fun ChatScreen(
     token: String, onToken: (String) -> Unit,
     messages: List<ChatMsg>,
     listening: Boolean,
+    crash: String?,
+    onCopyCrash: () -> Unit,
+    onDismissCrash: () -> Unit,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     onSend: (String) -> Unit,
@@ -88,6 +93,38 @@ fun ChatScreen(
             } else {
                 Text("○ Offline", color = RedText, fontSize = 13.sp)
             }
+        }
+
+        // ---------- crash card (agar pichli baar crash hui) ----------
+        if (crash != null) {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF3A1520))
+            ) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("⚠️ Pichli baar app crash hui", color = RedText, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    val lines = crash.lineSequence().take(10).toList()
+                    SelectionContainer {
+                        Text(
+                            lines.joinToString("\n"),
+                            color = Color(0xFFE8B4BC),
+                            fontSize = 11.sp,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF2A0F18))
+                                .padding(8.dp)
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = onCopyCrash, colors = ButtonDefaults.buttonColors(containerColor = RedText)) {
+                            Text("📋 Copy crash log")
+                        }
+                        OutlinedButton(onClick = onDismissCrash) { Text("Dismiss") }
+                    }
+                    Text("Crash log copy karke developer (AI) ko bhej do — turant fix ho jayega.", color = GreyText, fontSize = 11.sp)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
         }
 
         if (!connected) {
@@ -153,8 +190,8 @@ private fun ConnectionPanel(
                     }
                 }
                 Text(
-                    "PC par server chal raha hai?  python -m brain.main\n" +
-                    "IP dekhne ke liye PC par: ipconfig (Windows) / ifconfig",
+                    "💡 PC nahi hai? Brain ko phone me Termux me chalao (README me 'Termux' section).\n" +
+                    "Termux se chalane par IP: 127.0.0.1 use hoga.",
                     color = GreyText, fontSize = 12.sp
                 )
             }

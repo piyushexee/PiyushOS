@@ -176,5 +176,10 @@ _MOCK_GUI_SEQ = [
 
 
 def _mock_gui_step(messages: list) -> str:
+    sys_msg = (messages[0].get("content") or "") if messages else ""
+    if "planner" in sys_msg.lower():
+        return ("1. App kholo aur wait karo\n2. Search box par tap karo\n"
+                "3. 'Rahul' type karo\n4. Rahul ka chat select karo\n"
+                "5. Message type karo\n6. Send button dabao")
     step = sum(1 for m in messages if m.get("role") == "assistant")
     return _MOCK_GUI_SEQ[min(step, len(_MOCK_GUI_SEQ) - 1)]

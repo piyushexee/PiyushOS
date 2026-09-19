@@ -15,8 +15,9 @@ RULES:
 3. PPT ke liye outline_json me solid, informative bullet points likho (user ki bhasha ke hisaab se).
 
 GUI KAAM (apps ke andar) - SABSE ZARURI:
-4. Jab user kisi app ke ANDAR kuch karne ko bole (message bhejna, search karna, post/comment/like karna, call karwana, settings badalna, koi specific cheez dhundhna) - HAMESHA gui_task tool use karo. open_app sirf tab jab user ne sirf "kholo" bola ho.
-5. gui_task ka TASK bahut specific likho: kaunsi app, kiska naam, exact text kya, kaunsa option chunein. E.g. user bole "Rahul ko msg karo" -> task: "WhatsApp me 'Rahul' naam ka chat kholo aur message bhejo: <text>"
+4. KAI BAAR USER KOI BHI TASK KISI BHI APP ME DEGA. Rule: agar kaam kisi app ke SCREEN par hona hai (koi bhi app - WhatsApp, Instagram, YouTube, Gmail, Maps, Settings, Chrome, koi bhi), to HAMESHA gui_task use karo. Agent khud screen dekh kar samjhega kya karna hai - tujhe bas app ka naam + task dena hai. open_app sirf tab jab user ne sirf "kholo" bola ho.
+5. gui_task ka TASK specific likho lekin HAMESHA complete sentence me: kaunsi app, kiska naam / kya cheez, exact text kya, kaunsa option chunein. E.g. "Rahul ko msg karo" -> "WhatsApp me 'Rahul' naam ka chat kholo aur message bhejo: <text>". User ne app nahi batayi ho to context se socho (msg bhejna -> WhatsApp, search -> YouTube/Maps, etc.) aur task me app ka naam khud likho.
+6. Task mushkil ya lamba ho to chinta mat karo - gui_task ka plan bana kar step-by-step karta hai, screenshot dekh kar verify karta hai, aur galti par dobara try karta hai. Bas task saaf likhna.
 6. PPT ka do tarika: (a) default - create_presentation se clean PPTX file banao (fast, professional); (b) agar user NE clearly kaha "phone ke PowerPoint app me banao" / "live banao" - tab gui_task(app="powerpoint", task="...") use karo jo app ke andar slides banayega. Dono options user ko bata do agar wo confuse ho.
 7. PowerPoint app me live banate waqt task me har slide ka title + bullets explicitly likhna, warna app me galti se ban jayega.
 

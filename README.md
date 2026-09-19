@@ -5,22 +5,26 @@
 
 PiyushOS ek AI agent hai jo do hisse se banta hai:
 
-1. **🧠 Brain** (aapke PC/Laptop par chalta Python server) — aapki command samajhta hai, kaam ki planning karta hai, aur files (PPT/Excel/3D model/LinkedIn text) bana kar phone par bhejta hai
+1. **🧠 Brain** (aapke PHONE par **Termux** me chalta Python server) — aapki command samajhta hai, kaam ki planning karta hai, aur files (PPT/Excel/3D model/LinkedIn text) bana kar phone par bhejta hai
 2. **📱 Android App** (aapke phone par) — chat/voice UI deta hai aur phone ko control karta hai (app kholna, tap, swipe, typing, screenshot)
 
+> 💻 **PC hai to bhi chalega** — brain PC par bhi chala sakte ho (neeche optional section me hai). Par poora system **sirf ek phone** par bhi chalta hai.
+
 ```
- ┌────────────┐   voice/text command    ┌──────────────────────────┐
- │   PHONE    │ ──────────────────────► │        BRAIN (PC)        │
- │ (PiyushOS  │                         │  NVIDIA NIM AI model     │
- │   app)     │ ◄────────────────────── │  (nemotron-3-ultra)      │
- └────────────  reply + files + TTS    │                          │
-       ▲                                │  Tools:                  │
-       │                                │  • PPT banana (python-pptx)
-  Accessibility service                 │  • Excel (openpyxl)      │
-  (tap/swipe/type/app)                  │  • 3D model (trimesh)    │
-       │                                │  • LinkedIn/resume text  │
-  MediaProjection                       │  • phone control cmds    │
-  (screenshot)                          └──────────────────────────┘
+ ┌──────────────────────────────── PHONE ────────────────────────────────┐
+ │  ┌─────────────┐  voice/text command  ┌────────────────────────────┐ │
+ │  │  PiyushOS   │ ───────────────────► │   🧠 BRAIN (Termux)        │ │
+ │  │     App     │ ◄─────────────────── │   NVIDIA NIM AI model      │ │
+ │  └─────────────┘  reply + files + TTS │   (nemotron-3-ultra)       │ │
+ │        ▲                              │                            │ │
+ │        │                              │  Tools:                    │ │
+ │  Accessibility service                │  • PPT banana (python-pptx)│ │
+ │  (tap/swipe/type/app)                 │  • Excel (openpyxl)        │ │
+ │        │                              │  • 3D model (trimesh)      │ │
+ │  MediaProjection                      │  • LinkedIn/resume text    │ │
+ │  (screenshot)                         │  • GUI agent + phone cmds  │ │
+ │                                       └────────────────────────────┘ │
+ └──────────────────────────────────────────────────────────────────────┘
 ```
 
 ## ✨ Kya-kya karta hai
@@ -61,6 +65,8 @@ Yeh PiyushOS ka sabse bada power hai. Jab aap kisi app ke **andar** kuch karne k
 1. **UI Tree** — Accessibility service current app ke har element ka text + position (pixels) + clickable/editable status bhejti hai. Yeh sabse fast aur reliable hai
 2. **Screenshot + Vision** — AI ko screen ki photo bhi dikhti hai (agar model vision support kare)
 3. **OCR (ML Kit)** — jab UI tree me text kam ho (maps/games jaise canvas apps), to on-device OCR se text nikaalta hai
+
+**Koi bhi task, koi bhi app:** Agent pehle task ka **plan** banata hai (3-10 chhote steps), phir har step par screen dekh kar verify karta hai. App-specific "cheat sheets" (WhatsApp/Instagram/YouTube/Gmail/Maps/PowerPoint/Settings ke layout hints) isme built-in hain — isliye naye tasks par bhi zyada reliable hai.
 
 **Example — "WhatsApp me Rahul ko msg bhejo: kal milte hain":**
 ```
@@ -108,10 +114,14 @@ piyushos/
 │   └── dev/
 │       ├── test_tools.py      ← tools ka quick test
 │       └── test_e2e.py        ← fake phone se E2E test
+├── termux/                    ← 📲 PHONE setup scripts (PC chahiye nahi)
+│   ├── install.sh             ← one-time setup (Termux me chalao)
+│   └── run.sh                 ← brain server start
 └── android/                   ← 📱 Android App (Kotlin + Compose)
     └── app/src/main/java/com/piyushos/app/
         ├── MainActivity.kt            ← chat UI + voice + TTS + screen commands
         ├── ChatScreen.kt              ← Compose UI
+        ├── CrashLogger.kt             ← crash log (PC ke bina debug)
         ├── SocketClient.kt            ← WebSocket client
         ├── ShareActivity.kt           ← file share karna
         ├── accessibility/PhoneControllerService.kt  ← tap/swipe/type + UI TREE engine
@@ -136,73 +146,92 @@ piyushos/
 
 ---
 
-## 🚀 SETUP PART 1 — AI Brain (PC/Laptop)
+## 🚀 SETUP PART 1 — AI Brain (PHONE me hi, bina PC ke! 📲)
 
-### 1. Python install karo
-Python **3.10+** chahiye: https://www.python.org/downloads/
-(Windows me install karte waqt **"Add to PATH"** tick zaroor karo)
+Brain **Termux** me chalta hai — phone par ek Linux jaisa terminal. Pura system ek phone par hi chalta hai.
 
-### 2. Folder me jao + environment banao
+### 1. Termux install karo
+
+1. **F-Droid** se **Termux** install karo (Play Store wali build purani hai, mat use karna):
+   - F-Droid: https://f-droid.org/packages/com.termux/
+   - (F-Droid app khud Play Store me hai)
+2. (Optional) **Termux:API** bhi install karo — same F-Droid se
+
+### 2. Repo phone par lao
+
+Termux kholo aur yeh daalo:
 
 ```bash
+pkg install -y git
+git clone https://github.com/piyushexee/PiyushOS.git
+cd PiyushOS
+```
+
+> (Agar repo ka zip download kiya hai, usse Termux ke home folder me extract karna — jahan `.git`/`brain` folder hai, wahin se aage badho)
+
+### 3. One-time setup
+
+```bash
+bash termux/install.sh
+```
+
+Yeh khud karega: ✅ Termux me Python install → ✅ PiyushOS ki Python libraries install → ✅ `.env` file bana → ✅ test.
+(Pehli baar 5-10 min lag sakte hain — libraries download hoti hain)
+
+### 4. Apni API key daalo
+
+```bash
+nano .env
+```
+
+- `LLM_API_KEY=` wali line me apni **NVIDIA NIM key** daalo (`nvapi-...` se shuru hoti hai)
+- Key kahan milegi: **https://build.nvidia.com** → login → **API Keys** → Create API Key
+- Model pehle se set hai: `nvidia/nemotron-3-ultra-550b-a55b`
+- Save: `Ctrl+O` → Enter | Exit: `Ctrl+X`
+
+### 5. Brain chalao
+
+```bash
+bash termux/run.sh
+```
+
+Screen par dikhega:
+
+```
+🧠 PiyushOS Brain start ho raha hai: ws://127.0.0.1:8787
+   PiyushOS app me IP=127.0.0.1, Port=8787 daal ke CONNECT dabao.
+```
+
+⚠️ **Is terminal ko band mat karo** jab tak app use kar rahe ho. Screen lock kar sakte ho (wake-lock laga deta hai).
+
+### 6. Bina API key ke pehle test (optional)
+
+```bash
+LLM_MOCK=1 bash termux/run.sh
+```
+
+Mock mode me dimaag fake hai par pura pipeline (connect, commands, files) test ho jata hai.
+
+> 🔋 **Battery masla na ho**: Settings → Apps → Termux → Battery → **Unrestricted** kar do.
+>
+> 💡 Phone ka mobile data/WiFi chalu raha karo — AI ko NVIDIA server se baat karni hai.
+
+---
+
+### 💻 Optional: PC/Laptop hai to wahan bhi chala sakte ho
+
+```bash
+# PC par (Python 3.10+ chahiye)
 cd piyushos
 python -m venv .venv
-
-# Linux/Mac:
-source .venv/bin/activate
-# Windows:
-.venv\Scripts\activate
-```
-
-### 3. Dependencies install karo
-
-```bash
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r brain/requirements.txt
-```
-
-### 4. .env banao
-
-```bash
-cp .env.example .env      # Windows: copy .env.example .env
-```
-
-`.env` ko kholo aur apni **NVIDIA NIM API key** daalo:
-- Key kahan milegi: **https://build.nvidia.com** → login → **API Keys** → Create API Key
-- `LLM_API_KEY=nvapi-xxxxxxxx` yeh daalo
-- Model pehle se set hai: `nvidia/nemotron-3-ultra-550b-a55b`
-
-### 5. Test karo (bina API key ke)
-
-```bash
-# Linux/Mac
-LLM_MOCK=1 python -m brain.main
-# Windows (PowerShell)
-$env:LLM_MOCK=1; python -m brain.main
-```
-
-Mock mode me dimaag fake hai par pura pipeline (phone connect, commands, files) test hota hai.
-
-### 6. LIVE mode me chalao
-
-```bash
+cp .env.example .env             # fir .env me API key daalo
 python -m brain.main
 ```
 
-Screen par yeh dikhega:
-
-```
-🧠 PiyushOS Brain - aapka personal AI butler server
-  Model : nvidia/nemotron-3-ultra-550b-a55b
-  Port  : 8787
-  Token : piyush123
-Android app me yahi IP : Port : Token daal ke connect karo.
-```
-
-> ⚠️ **PC ka IP dhundo** (phone aur PC ek hi WiFi par hone chahiye):
-> - **Windows**: CMD me `ipconfig` → IPv4 Address (jaise `192.168.29.1`)
-> - **Linux/Mac**: terminal me `ifconfig` ya `ip addr`
->
-> Agar connect na ho to Windows Firewall me Python ke liye **Inbound Rule** allow karna (port 8787, TCP).
+PC me chalane par phone + PC **ek hi WiFi** par hone chahiye, aur app me PC ka IP daalna hai
+(Windows: CMD me `ipconfig` → IPv4 Address). Windows Firewall me port **8787** allow karna pad sakta hai.
 
 ---
 
@@ -220,7 +249,8 @@ Android app me yahi IP : Port : Token daal ke connect karo.
 
 ### 2. App kholo + Connect karo
 
-1. **IP** daalo (PC ka, jaise `192.168.29.1`)
+1. **IP** daalo — Termux me brain chalane par: **`127.0.0.1`** (dono ek hi phone me hain)
+   - (PC me brain chalate ho to PC ka IP, jaise `192.168.29.1`)
 2. **Port** `8787`
 3. **Token** `piyush123` (jo `.env` me `DEVICE_TOKEN` hai)
 4. **CONNECT** dabao → "✅ Connect ho gaya" dikhega
@@ -279,7 +309,8 @@ python -m brain.dev.test_tools    # PPT/Excel/3D models banake verify karta hai
 
 | Problem | Solution |
 |---|---|
-| App connect nahi hoti | (1) PC + phone **ek hi WiFi** par? (2) PC ka IP sahi? (3) Windows Firewall me port **8787** allow? (4) Server terminal me "📱 Phone connect hua" toh dikha? |
+| **App khulte hi crash ho jaye** ("keeps stopping") | App dobara kholo — red **crash card** dikhega (crash ka reason likha hoga). **Copy crash log** dabao aur log bhej do — fix turant aayega. Naya APK download karke install karna bhi try karo |
+| App connect nahi hoti | (1) Brain server (Termux) chal raha hai? (2) IP sahi? — Termux me **`127.0.0.1`**, PC me PC ka IP (3) Token match? (4) Termux terminal me "📱 Phone connect hua" toh dikha? |
 | "Ghalat token" | `.env` ka `DEVICE_TOKEN` aur app ka token match karo |
 | AI reply nahi karta / error | `.env` me `LLM_API_KEY` sahi hai? `LLM_MOCK=1` se pehle test karo. Server log dekho |
 | "tools not supported" jaisa error | Kuch purane models tool-calling nahi karte. `.env` me model badlo, e.g. `LLM_MODEL=nvidia/llama-3.1-nemotron-70b-instruct` |
@@ -295,7 +326,7 @@ python -m brain.dev.test_tools    # PPT/Excel/3D models banake verify karta hai
 
 ## 🔒 Safety & Privacy
 
-- Server aapke **apne PC** par chalta hai — phone se sirf commands jaati hain aapke hi network me
+- Brain server aapke **apne phone** (Termux) par chalta hai — phone se sirf commands jaati hain aapke hi device par
 - Kisi bhi third-party server par screen/data **nahi** jaata
 - Token (`DEVICE_TOKEN`) change karke kisi aur ke connect hone se rok sakte ho
 - AI sirf tabhi phone control karta hai jab aapne bola hai

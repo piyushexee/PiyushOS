@@ -180,16 +180,31 @@ def build_model3d(name: str = "model", shape: str = "rocket", color: str = "#4fc
     scene = trimesh.Scene(parts)
 
     stamp = time.strftime("%Y%m%d_%H%M%S")
-    glb = settings.out_dir / f"{_safe_name(name)}_{shape}_{stamp}.glb"
     stl = settings.out_dir / f"{_safe_name(name)}_{shape}_{stamp}.stl"
-    scene.export(str(glb))
+    glb = settings.out_dir / f"{_safe_name(name)}_{shape}_{stamp}.glb"
+
+    # STL hamesha export karo (printing ke liye)
     trimesh.util.concatenate(parts).export(str(stl))
 
+    # GLB best-effort (agar koi optional dependency miss ho to sirf STL chalega)
+    files = [str(stl)]
+    glb_ok = True
+    try:
+        scene.export(str(glb))
+        files.insert(0, str(glb))
+    except Exception:
+        glb_ok = False
+        try:
+            glb.unlink()
+        except OSError:
+            pass
+
     return {
-        "glb": str(glb),
+        "glb": str(glb) if glb_ok else "",
         "stl": str(stl),
         "shape": shape,
-        "name": glb.name,
-        "files": [str(glb), str(stl)],
-        "summary": f"3D model ban gaya: {glb.name} (+ STL printing ke liye). Shape: {shape}",
+        "name": (glb.name if glb_ok else stl.name),
+        "files": files,
+        "summary": f"3D model ban gaya: {stl.name}. Shape: {shape}"
+        + ("" if glb_ok else " (GLB export skip hua, STL diya)"),
     }

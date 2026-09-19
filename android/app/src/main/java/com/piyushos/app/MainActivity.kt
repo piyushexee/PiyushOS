@@ -46,7 +46,8 @@ class MainActivity : ComponentActivity() {
     private val messages = mutableStateListOf<ChatMsg>()
     private val connected = mutableStateOf(false)
     private val listening = mutableStateOf(false)
-    private val host = mutableStateOf(load("host", "192.168.29.1"))
+    private val crash = mutableStateOf<String?>(null)
+    private val host = mutableStateOf(load("host", "127.0.0.1"))
     private val port = mutableStateOf(load("port", "8787"))
     private val token = mutableStateOf(load("token", "piyush123"))
 
@@ -79,8 +80,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        tts = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) tts?.language = Locale("hi", "IN")
+        // SABSE PEHLE: crash logger (taaki koi bhi crash save ho jaye)
+        CrashLogger.install(this)
+
+        tts = try {
+            TextToSpeech(this) { status ->
+                if (status == TextToSpeech.SUCCESS) tts?.language = Locale("hi", "IN")
+            }
+        } catch (e: Exception) {
+            addSystem("⚠️ TTS engine nahi mila (voice replies nahi honge): ${e.message}")
+            null
         }
         if (Build.VERSION.SDK_INT >= 33) {
             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
@@ -99,6 +108,12 @@ class MainActivity : ComponentActivity() {
                     token = token.value, onToken = { token.value = it },
                     messages = messages,
                     listening = listening.value,
+                    crash = crash.value,
+                    onCopyCrash = { copyCrashLog() },
+                    onDismissCrash = {
+                        CrashLogger.clear(this@MainActivity)
+                        crash.value = null
+                    },
                     onConnect = { connect() },
                     onDisconnect = { socket.close() },
                     onSend = { sendChat(it) },
@@ -115,7 +130,10 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
-        addSystem("Namaste Piyush! 👋 Pehle CONNECT dabao (PC par server chal raha hona chahiye), phir Accessibility + Screenshot enable karo. Phir bolo: 'Ek PPT banao AI par'")
+        // pichla crash check karo
+        crash.value = CrashLogger.last(this)
+
+        addSystem("Namaste Piyush! 👋 Pehle CONNECT dabao (server chal raha hona chahiye), phir Accessibility + Screenshot enable karo. Phir bolo: 'Ek PPT banao AI par'")
     }
 
     override fun onDestroy() {
@@ -331,6 +349,13 @@ class MainActivity : ComponentActivity() {
     }
 
     // ---------------- helpers ----------------
+
+    private fun copyCrashLog() {
+        val log = CrashLogger.last(this) ?: return
+        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        cm.setPrimaryClip(ClipData.newPlainText("PiyushOS Crash Log", log))
+        addSystem("📋 Crash log clipboard par copy ho gaya — paste karke bhej do!")
+    }
 
     private fun addMsg(role: Role, text: String) {
         messages.add(ChatMsg(++msgId, role, text))
