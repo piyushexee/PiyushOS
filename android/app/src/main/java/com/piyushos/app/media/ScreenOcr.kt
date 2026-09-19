@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.TextRecognizerOptions
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 /**
  * On-device OCR (ML Kit) - tab use hota hai jab accessibility tree me text kam ho

@@ -14,10 +14,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -182,14 +181,14 @@ private fun ChatView(
     onSend: (String) -> Unit,
     onMic: () -> Unit,
 ) {
-    val scrollState = rememberScrollState()
+    val listState = rememberLazyListState()
     LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) scrollState.scrollTo(messages.size * 100_000) // bottom side
+        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
     }
 
     Column(Modifier.fillMaxSize()) {
         LazyColumn(
-            state = scrollState,
+            state = listState,
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(bottom = 10.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)

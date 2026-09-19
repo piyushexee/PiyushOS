@@ -248,9 +248,7 @@ class MainActivity : ComponentActivity() {
                                 "image_b64",
                                 android.util.Base64.encodeToString(FileSaver.pngBytes(bmp), android.util.Base64.NO_WRAP)
                             ).put("width", bmp.width).put("height", bmp.height)
-                            val textNodes = tree.count { i, c ->
-                                i + 1 < tree.length && tree.startsWith("\"t\":", i)
-                            }
+                            val textNodes = Regex("\"t\":").findAll(tree).count()
                             if (textNodes < 6) {
                                 val ocr = ScreenOcr.ocr(bmp)
                                 if (ocr.isNotEmpty()) data.put("ocr", ocr)
@@ -303,7 +301,7 @@ class MainActivity : ComponentActivity() {
                     override fun onReadyForSpeech(params: Bundle?) {}
                     override fun onBeginningOfSpeech() {}
                     override fun onRmsChanged(rmsdB: Float) {}
-                    override fun onBufferReceived(buffer: ShortArray?) {}
+                    override fun onBufferReceived(buffer: ByteArray?) {}
                     override fun onEndOfSpeech() { listening.value = false }
                     override fun onEvent(eventType: Int, params: Bundle?) {}
                 })

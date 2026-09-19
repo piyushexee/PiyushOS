@@ -68,6 +68,7 @@ object Notifier {
                 .setSmallIcon(android.R.drawable.stat_notify_chat)
                 .setAutoCancel(true)
                 .addAction(0, "Share", pi)
+                .build()
             nm.notify(name.hashCode(), n)
         } catch (_: Exception) {
         }

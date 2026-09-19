@@ -175,9 +175,10 @@ class PhoneControllerService : AccessibilityService() {
             val label = ri.loadLabel(pm).toString().lowercase(Locale.ROOT)
             val matched = candidates.any { label == it || label.contains(it) }
             if (matched) {
+                val ai = ri.activityInfo
                 val intent = Intent(Intent.ACTION_MAIN)
                     .addCategory(Intent.CATEGORY_LAUNCHER)
-                    .setComponent(ComponentName(ri.packageName, ri.name))
+                    .setComponent(ComponentName(ai.packageName, ai.name))
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(intent)
                 return true
