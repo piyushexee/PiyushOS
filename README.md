@@ -122,6 +122,20 @@ piyushos/
 
 ---
 
+## 📲 APK Direct Download (Android Studio ke bina!)
+
+**GitHub Actions har push par APK khud bana deta hai.** Aapko Android Studio ki zaroorat hi nahi:
+
+1. [github.com/piyushexee/PiyushOS/actions](https://github.com/piyushexee/PiyushOS/actions) kholo
+2. **Android APK Build** workflow me latest **green run** pe click karo
+3. Neeche **Artifacts** me `PiyushOS-Android-APK` dikhayega — uspe click karo → **download**
+4. Zip kholege to `app-debug.apk` milega → phone par bhej ke install karo
+   *(Settings me "Unknown sources" allow karna padega)*
+
+> Naya code push karoge to GitHub Actions 5-10 min me naya APK bana dega. 🤖
+
+---
+
 ## 🚀 SETUP PART 1 — AI Brain (PC/Laptop)
 
 ### 1. Python install karo
@@ -194,17 +208,15 @@ Android app me yahi IP : Port : Token daal ke connect karo.
 
 ## 📱 SETUP PART 2 — Android App
 
-### 1. App build karo
+### 1. App phone par install karo
 
-**Tarika A (aasan) — Android Studio:**
-1. [Android Studio](https://developer.android.com/studio) install karo (agar nahi hai)
-2. `piyushos/android` folder ko **Open** karo → sync hone do
-3. Phone ko USB se lagao (Developer Options me **USB Debugging** on) → **Run ▶** button dabao
+**Tarika A (sabse aasan) — GitHub Actions se APK:**
+1. [github.com/piyushexee/PiyushOS/actions](https://github.com/piyushexee/PiyushOS/actions) → latest green run → **Artifacts** → `PiyushOS-Android-APK` → download
+2. Phone par bhejo aur install karo
 
-**Tarika B — APK banao:**
-1. Android Studio me: **Build → Build Bundle(s)/APK(s) → Build APK(s)**
-2. APK `app/build/outputs/apk/debug/app-debug.apk` me milegi
-3. Phone par bhejo (WhatsApp/Drive) aur install karo
+**Tarika B — Android Studio (developers ke liye):**
+1. [Android Studio](https://developer.android.com/studio) me `android` folder **Open** karo
+2. Phone ko USB se lagao (Developer Options me **USB Debugging** on) → **Run ▶** dabao
 
 ### 2. App kholo + Connect karo
 
