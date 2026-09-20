@@ -65,7 +65,15 @@ class MainActivity : ComponentActivity() {
                 intent.putExtra(ProjectionService.EXTRA_DATA, result.data)
                 intent.putExtra(ProjectionService.EXTRA_CODE, result.resultCode)
                 ContextCompat.startForegroundService(this, intent)
-                addSystem("📸 Screenshot permission mil gayi!")
+                addSystem("📸 Screenshot permission mil gayi — capture setup ho raha...")
+                scope.launch {
+                    kotlinx.coroutines.delay(1800)
+                    if (ProjectionService.ready) {
+                        addSystem("✅ Screen capture taiyaar — ab agent screen dekh kar kaam kar sakta hai!")
+                    } else {
+                        addSystem("⚠️ Screen capture start nahi ho paya: ${ProjectionService.lastError ?: "unknown"}. '📸 Screenshot ON' dobara dabao.")
+                    }
+                }
             } else {
                 addSystem("⚠️ Screenshot permission nahi mili. Jab zaroorat ho tab 'Enable Screenshots' dobara dabao.")
             }

@@ -212,7 +212,15 @@ class AgentBrain(
 
     private fun deviceScreenshot(): JSONObject {
         val bmp = com.piyushos.app.media.ProjectionService.capture()
-            ?: throw IllegalStateException("Screenshot nahi mil paya — app me 'Screenshot ON' dabao")
+        val ps = com.piyushos.app.media.ProjectionService
+        if (bmp == null) {
+            val msg = if (ps.ready) {
+                "Screenshot frame abhi nahi mila (screen busy ho sakti hai) — 2-3 second baad dobara try karo"
+            } else {
+                "Screenshot permission sahi se ON nahi hui (${ps.lastError ?: "reason unknown"}) — user ko bolo app me 'Screenshot ON' dobara dabaye"
+            }
+            throw IllegalStateException(msg)
+        }
         val b64 = android.util.Base64.encodeToString(com.piyushos.app.files.FileSaver.pngBytes(bmp), android.util.Base64.NO_WRAP)
         val w = bmp.width; val h = bmp.height
         bmp.recycle()
@@ -515,6 +523,7 @@ PHONE CONTROL (gui_task ke alawa):
 13. Agar Accessibility ya Screenshot permission on nahi hai to user ko bata do ki app me 'Accessibility ON' / 'Screenshot ON' dabana hai. File/text wale kaam (PPT, Excel, 3D, LinkedIn) aaj bhi kar sakte ho.
 14. Kabhi bhi user ki galti na maaro; kaam chhota sa bhi ho to poora karo aur bata do.
 15. gui_task ke dauraan alag-alag updates mat bhejo - wo khud progress bhejta hai.
+16. Tool ka error aaye to user ko TOOL KE EXACT WORDS me batao - khud se reason GUESS mat karo. E.g. open_app fail ho to "app phone par nahi mili" mat bolo bina tool ke confirm kiye. Screenshot fail ho to user ko app me 'Screenshot ON' dobara dabane ko bolo (exact reason tool deta hai, usko hi batao).
 """
 
         val TOOL_SPECS: JSONArray by lazy { buildToolSpecs() }

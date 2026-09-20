@@ -125,8 +125,13 @@ class GuiAgent(
             // 3) screen
             val screen = captureScreen()
             if (screen.tree == "[]" && screen.imgB64 == null) {
-                return JSONObject().put("error", "Screen ka status nahi mil paya (Accessibility + Screenshot dono enable karo)")
-                    .put("summary", "GUI kaam nahi ho paya: screen nahi dikh rahi")
+                val reason = if (ProjectionService.ready) {
+                    "screen nahi dikh rahi - Accessibility service on karo (Settings > Accessibility > PiyushOS)"
+                } else {
+                    "screen capture ready nahi: ${ProjectionService.lastError ?: "unknown"} - app me 'Screenshot ON' dobara dabao"
+                }
+                return JSONObject().put("error", reason)
+                    .put("summary", "GUI kaam nahi ho paya: $reason")
             }
 
             var prompt = (
