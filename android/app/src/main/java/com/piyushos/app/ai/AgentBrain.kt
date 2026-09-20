@@ -206,7 +206,13 @@ class AgentBrain(
         if (app.isBlank()) throw IllegalArgumentException("app ka naam chahiye")
         val s = PhoneControllerService.instance
             ?: throw IllegalStateException("Accessibility service on nahi hai — app me 'Accessibility ON' dabao")
-        if (!s.openApp(app)) throw IllegalStateException("App '$app' phone par nahi mili")
+        if (!s.openApp(app)) {
+            val hint = s.installedAppLabels(50).joinToString(", ")
+            throw IllegalStateException(
+                "App '$app' phone par nahi mili. Phone par installed apps: [$hint] — " +
+                    "kaam inhi installed apps me se kisi me karo, ya user se poochho."
+            )
+        }
         return JSONObject().put("app", app).put("summary", "App '$app' khol di phone par")
     }
 

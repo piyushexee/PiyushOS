@@ -14,7 +14,9 @@ import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 
 class ProjectionService : Service() {
 
@@ -83,6 +85,23 @@ class ProjectionService : Service() {
         }
     }
 
+    /** Android 14+ mandatory callback - system ne capture band kiya to clean state */
+    private val mediaCallback = object : MediaProjection.Callback() {
+        override fun onStop() {
+            ready = false
+            lastError = "system ne screen capture band kar diya — app me 'Screenshot ON' dobara dabao"
+            try {
+                stopForeground(true)
+                stopSelf()
+            } catch (_: Exception) {
+            }
+        }
+
+        override fun onCapturedContentUnavailable() {
+            // Android 14+: screen content unavailable hai (secure app) - ignore
+        }
+    }
+
     private fun buildNotification(): Notification {
         val nm = getSystemService(NotificationManager::class.java)
         if (nm.getNotificationChannel("projection") == null) {
@@ -117,6 +136,13 @@ class ProjectionService : Service() {
                 ready = false
                 lastError = "MediaProjection nahi ban paya (code=$code) — permission dobara do"
                 return START_NOT_STICKY
+            }
+            // Android 14 (API 34) par mandatory: callback register karo createVirtualDisplay
+            // se PEHLE, warna "Must register a callback before starting capture..." error
+            try {
+                proj.registerCallback(mediaCallback, Handler(Looper.getMainLooper()))
+            } catch (e: Exception) {
+                // purane Android par yeh nahi chahiye
             }
             val dm = resources.displayMetrics
             val rd = ImageReader.newInstance(

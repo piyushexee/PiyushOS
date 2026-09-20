@@ -100,7 +100,11 @@ class GuiAgent(
         if (app.isNotBlank()) {
             val s = svc() ?: throw IllegalStateException("Accessibility service on nahi hai — app me 'Accessibility ON' dabao")
             if (!s.openApp(app.trim())) {
-                throw IllegalStateException("App '$app' phone par nahi khul payi")
+                val hint = s.installedAppLabels(50).joinToString(", ")
+                throw IllegalStateException(
+                    "App '$app' phone par nahi khul payi (shayad install nahi hai). " +
+                        "Installed apps: [$hint] — inme se sahi app me task karke dekho."
+                )
             }
             Thread.sleep(2500)
         }

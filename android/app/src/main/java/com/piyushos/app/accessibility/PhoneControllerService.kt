@@ -186,4 +186,25 @@ class PhoneControllerService : AccessibilityService() {
         }
         return false
     }
+
+    /** Phone par installed launchable apps ke labels (AI ko hint dene ke liye). */
+    fun installedAppLabels(max: Int = 50): List<String> {
+        return try {
+            val pm = packageManager
+            val query = pm.queryIntentActivities(
+                Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0
+            )
+            val out = LinkedHashSet<String>()
+            for (ri in query) {
+                try {
+                    out.add(ri.loadLabel(pm).toString())
+                } catch (_: Exception) {
+                }
+                if (out.size >= max) break
+            }
+            out.toList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 }
