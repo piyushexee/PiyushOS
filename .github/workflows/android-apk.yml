@@ -1,13 +1,14 @@
 name: Android APK Build
 
 # Jab chalega:
-# 1. main branch par push hote hi (android/ folder me koi bhi change par)
+# 1. main branch par push hote hi (android/ ya canary/ folder me koi bhi change par)
 # 2. Manually - GitHub Actions tab me "Run workflow" dabakar
 on:
   push:
     branches: [main, master]
     paths:
       - "android/**"
+      - "canary/**"
       - ".github/workflows/android-apk.yml"
   workflow_dispatch:
 
@@ -32,9 +33,6 @@ jobs:
           packages: "platform-tools platforms;android-34 build-tools;34.0.0"
           check-expiry: true
 
-      - name: Show Android SDK
-        run: sdkmanager --list_installed 2>/dev/null | head -20 || true
-
       - name: Grant execute permission to gradlew
         working-directory: android
         run: chmod +x gradlew
@@ -43,12 +41,16 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Rename APK with version (PiyushOS-v1.3.apk)
+      - name: Rename APK with version (PiyushOS-v1.5.apk)
         working-directory: android
         run: |
           V=$(grep 'versionName' app/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
           mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/PiyushOS-v${V}.apk"
           ls -lh app/build/outputs/apk/debug/
+
+      - name: Build canary test APK (minimal diagnostic app)
+        working-directory: android
+        run: ./gradlew -p ../canary assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
@@ -57,3 +59,57 @@ jobs:
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Upload canary as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PiyushOS-Test-APK
+          path: canary/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish both APKs to stable "latest" GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          API=https://api.github.com/repos/$GITHUB_REPOSITORY
+          # 1) "latest" release dhundo ya banao
+          RELEASE_ID=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "$API/releases" | python3 -c "
+          import json,sys
+          try:
+              rs=json.load(sys.stdin)
+              print(next((r['id'] for r in rs if r['tag_name']=='latest'), ''))
+          except Exception:
+              print('')
+          ")
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Creating 'latest' release..."
+            RELEASE_ID=$(curl -s -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "$API/releases" -d '{"tag_name":"latest","name":"Latest APK - yahi download karo","body":"Hamesha latest APK yahi hoga. Naya build aate hi yahan update ho jata hai. APK tap karo - seedha download ho jayega."}' \
+              | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+            echo "Created release ID: $RELEASE_ID"
+          fi
+          # 2) purane APK assets delete karo
+          curl -s -H "Authorization: Bearer $GH_TOKEN" "$API/releases/$RELEASE_ID/assets" | python3 -c "
+          import json,sys
+          try:
+              for a in json.load(sys.stdin):
+                  if a['name'].endswith('.apk'): print(a['id'])
+          except Exception:
+              pass
+          " | while read AID; do
+            curl -s -X DELETE -H "Authorization: Bearer $GH_TOKEN" "$API/releases/$RELEASE_ID/assets/$AID" > /dev/null || true
+          done
+          # 3) naye APKs upload karo
+          MAIN_APK=$(ls android/app/build/outputs/apk/debug/PiyushOS-v*.apk | head -1)
+          echo "Uploading: $MAIN_APK"
+          curl -s -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"$MAIN_APK" \
+            "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?name=$(basename "$MAIN_APK")" > /dev/null
+          echo "Uploading: canary/app/build/outputs/apk/debug/app-debug.apk (as PiyushOS-Test.apk)"
+          curl -s -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @canary/app/build/outputs/apk/debug/app-debug.apk \
+            "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?name=PiyushOS-Test.apk" > /dev/null
+          echo "✅ Published to https://github.com/$GITHUB_REPOSITORY/releases/latest"

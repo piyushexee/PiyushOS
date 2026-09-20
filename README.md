@@ -134,15 +134,18 @@ piyushos/
 
 ## 📲 APK Direct Download (Android Studio ke bina!)
 
-**GitHub Actions har push par APK khud bana deta hai.** Aapko Android Studio ki zaroorat hi nahi:
+**Sabse aasan tarika — ek hi link, hamesha latest APK:**
 
-1. [github.com/piyushexee/PiyushOS/actions](https://github.com/piyushexee/PiyushOS/actions) kholo
-2. **Android APK Build** workflow me latest **green run** pe click karo
-3. Neeche **Artifacts** me `PiyushOS-Android-APK` dikhayega — uspe click karo → **download**
-4. Zip kholege to `app-debug.apk` milega → phone par bhej ke install karo
-   *(Settings me "Unknown sources" allow karna padega)*
+### 👉 [github.com/piyushexee/PiyushOS/releases/latest](https://github.com/piyushexee/PiyushOS/releases/latest)
 
-> Naya code push karoge to GitHub Actions 5-10 min me naya APK bana dega. 🤖
+1. Upar wala link kholo
+2. **`PiyushOS-v1.5.apk`** (ya jo latest version ho) par tap karo → seedha download
+3. Download khatam hote hi install karo *(Settings me "Unknown sources" allow karna padega)*
+4. App drawer me **`PiyushOS v1.5`** naam dikhega — version drawer me hi confirm ho jayega!
+
+**🩺 `PiyushOS-Test.apk` bhi hai usi page pe** — ek chhota test app. Agar main app ki koi problem aaye to yeh install karke dekho — woh chale to phone theek hai, problem main app ke component me hogi.
+
+> Har naya build aate hi yeh page khud update ho jata hai. Purane Actions artifacts ki zaroorat nahi. 🤖
 
 ---
 
