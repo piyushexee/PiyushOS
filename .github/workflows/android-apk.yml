@@ -16,6 +16,8 @@ jobs:
   build-apk:
     name: Build Debug APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -84,9 +86,20 @@ jobs:
           ")
           if [ -z "$RELEASE_ID" ]; then
             echo "Creating 'latest' release..."
-            RELEASE_ID=$(curl -s -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-              "$API/releases" -d '{"tag_name":"latest","name":"Latest APK - yahi download karo","body":"Hamesha latest APK yahi hoga. Naya build aate hi yahan update ho jata hai. APK tap karo - seedha download ho jayega."}' \
-              | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+            RESP=$(curl -s -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "$API/releases" -d '{"tag_name":"latest","name":"Latest APK - yahi download karo","body":"Hamesha latest APK yahi hoga. Naya build aate hi yahan update ho jata hai. APK tap karo - seedha download ho jayega."}')
+            echo "Create response: $RESP" | head -c 500
+            RELEASE_ID=$(echo "$RESP" | python3 -c "
+            import json,sys
+            try:
+                print(json.load(sys.stdin).get('id') or '')
+            except Exception:
+                print('')
+            ")
+            if [ -z "$RELEASE_ID" ]; then
+              echo "::error::Release create nahi hui (token permission check karo)"
+              exit 1
+            fi
             echo "Created release ID: $RELEASE_ID"
           fi
           # 2) purane APK assets delete karo
