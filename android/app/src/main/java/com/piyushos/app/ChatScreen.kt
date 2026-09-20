@@ -130,7 +130,7 @@ fun ChatScreen(
         }
 
         if (!connected) {
-            ConnectionPanel(host, onHost, port, onPort, token, onToken,
+            BrainPanel(apiKey, onApiKey,
                 onConnect, onEnableAccessibility, onEnableScreenshots)
         } else {
             ChatView(messages, input, { input = it }, listening, onSend, onMic)
@@ -139,10 +139,8 @@ fun ChatScreen(
 }
 
 @Composable
-private fun ConnectionPanel(
-    host: String, onHost: (String) -> Unit,
-    port: String, onPort: (String) -> Unit,
-    token: String, onToken: (String) -> Unit,
+private fun BrainPanel(
+    apiKey: String, onApiKey: (String) -> Unit,
     onConnect: () -> Unit,
     onEnableAccessibility: () -> Unit,
     onEnableScreenshots: () -> Unit,
@@ -160,29 +158,24 @@ private fun ConnectionPanel(
                 Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("🔌 Server se Connect karo", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                OutlinedTextField(
-                    value = host, onValueChange = onHost, singleLine = true,
-                    label = { Text("IP (PC ka, e.g. 192.168.29.1)") },
-                    colors = fieldColors()
+                Text("🧠 In-app Dimaag — sirf ek baar setup", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    "Ab PC/Server/Termux kuch nahi chahiye. Dimaag phone ke andar chalta hai. Bas NVIDIA NIM ki API key daalo (ek baar).",
+                    color = GreyText, fontSize = 12.sp
                 )
                 OutlinedTextField(
-                    value = port, onValueChange = onPort, singleLine = true,
-                    label = { Text("Port (8787)") },
-                    colors = fieldColors()
-                )
-                OutlinedTextField(
-                    value = token, onValueChange = onToken, singleLine = true,
-                    label = { Text("Token (.env ka DEVICE_TOKEN)") },
+                    value = apiKey, onValueChange = onApiKey, singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    label = { Text("NVIDIA NIM API key (nvapi-...)") },
                     colors = fieldColors()
                 )
                 Button(
                     onClick = onConnect,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp),
+                        .height(52.dp),
                     shape = RoundedCornerShape(14.dp)
-                ) { Text("CONNECT", fontSize = 16.sp) }
+                ) { Text("🧠 DIMAAG ON KARO", fontSize = 17.sp) }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(onClick = onEnableAccessibility, modifier = Modifier.weight(1f)) {
                         Text("🦾 Accessibility ON", fontSize = 13.sp)
@@ -192,8 +185,9 @@ private fun ConnectionPanel(
                     }
                 }
                 Text(
-                    "💡 PC nahi hai? Brain ko phone me Termux me chalao (README me 'Termux' section).\n" +
-                    "Termux se chalane par IP: 127.0.0.1 use hoga.",
+                    "💡 Key sirf aapke phone par save hoti hai — kahin bheji nahi jaati.\n" +
+                    "Free key milta hai: integrate.api.nvidia.com → Console → API Keys.\n" +
+                    "Ek baar daalo, phir hamesha ready — bolo, wo karega.",
                     color = GreyText, fontSize = 12.sp
                 )
             }
