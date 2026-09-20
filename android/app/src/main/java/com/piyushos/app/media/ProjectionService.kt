@@ -96,10 +96,6 @@ class ProjectionService : Service() {
             } catch (_: Exception) {
             }
         }
-
-        override fun onCapturedContentUnavailable() {
-            // Android 14+: screen content unavailable hai (secure app) - ignore
-        }
     }
 
     private fun buildNotification(): Notification {
