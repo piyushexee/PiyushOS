@@ -10,7 +10,7 @@
 
     <application
         android:name=".PiyushApp"
-        android:label="PiyushOS v1.5"
+        android:label="PiyushOS v1.6"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Theme.PiyushOS"

@@ -44,25 +44,19 @@ class MainActivity : ComponentActivity() {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private val messages = mutableStateListOf<ChatMsg>()
-    private val connected = mutableStateOf(false)
     private val listening = mutableStateOf(false)
     private val crash = mutableStateOf<String?>(null)
-    private val host = mutableStateOf(load("host", "127.0.0.1"))
-    private val port = mutableStateOf(load("port", "8787"))
-    private val token = mutableStateOf(load("token", "piyush123"))
+    private val apiKey = mutableStateOf(load("nim_api_key", ""))
+
+    private val connected: Boolean get() = apiKey.value.isNotBlank()
 
     private var tts: TextToSpeech? = null
     private var recognizer: SpeechRecognizer? = null
     private var msgId = 0L
+    private var brainBusy = false
 
-    private val socket = SocketClient(
-        onStatus = { connected.value = it },
-        onMessage = { onSocketMessage(it) },
-        screenInfo = {
-            val dm = resources.displayMetrics
-            dm.widthPixels to dm.heightPixels
-        },
-    )
+    // Pura dimaag ab in-app hai (com.piyushos.app.ai.AgentBrain) — koi server nahi.
+    // SocketClient abhi unused hai (repo me legacy ke liye rakha hai).
 
     private val projectionLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -133,10 +127,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 ChatScreen(
-                    connected = connected.value,
-                    host = host.value, onHost = { host.value = it },
-                    port = port.value, onPort = { port.value = it },
-                    token = token.value, onToken = { token.value = it },
+                    connected = connected,
+                    apiKey = apiKey.value, onApiKey = { apiKey.value = it },
                     messages = messages,
                     listening = listening.value,
                     crash = crash.value,
@@ -146,7 +138,11 @@ class MainActivity : ComponentActivity() {
                         crash.value = null
                     },
                     onConnect = { connect() },
-                    onDisconnect = { socket.close() },
+                    onDisconnect = {
+                        apiKey.value = ""
+                        save("nim_api_key", "")
+                        addSystem("🔑 API key reset ho gayi.")
+                    },
                     onSend = { sendChat(it) },
                     onMic = { startListening() },
                     onEnableAccessibility = {
@@ -164,159 +160,93 @@ class MainActivity : ComponentActivity() {
         // pichla crash check karo
         crash.value = CrashLogger.last(this)
 
-        addSystem("Namaste Piyush! 👋 Pehle CONNECT dabao (server chal raha hona chahiye), phir Accessibility + Screenshot enable karo. Phir bolo: 'Ek PPT banao AI par'")
+        addSystem("Namaste Piyush! 👋 Ek baar NVIDIA NIM ki API key daal ke 'DIMAAG ON KARO' dabao, phir Accessibility + Screenshot enable karo. Phir bolo: 'Ek PPT banao AI par'")
     }
 
     override fun onDestroy() {
         super.onDestroy()
         scope.cancel()
-        socket.close()
         try { recognizer?.destroy() } catch (_: Exception) {}
         try { tts?.stop(); tts?.shutdown() } catch (_: Exception) {}
     }
 
-    // ---------------- connect / chat ----------------
+    // ---------------- dimaag on / chat (in-app brain) ----------------
 
     private fun connect() {
-        save("host", host.value.trim())
-        save("port", port.value.trim())
-        save("token", token.value.trim())
-        val p = port.value.toIntOrNull()
-        if (p == null) {
-            addSystem("⚠️ Port number sahi nahi hai (e.g. 8787)")
+        val key = apiKey.value.trim()
+        if (key.isEmpty()) {
+            addSystem("⚠️ Pehle NVIDIA NIM API key daalo (nvapi- se shuru hoti hai)")
             return
         }
-        addSystem("Connecting... ${host.value.trim()}:$p")
-        socket.connect(host.value.trim(), p, token.value.trim())
+        save("nim_api_key", key)
+        addSystem("🧠 Dimaag ON ho gaya! Ab bas bolo — PPT, Excel, 3D, kisi bhi app me kaam.")
     }
 
     private fun sendChat(text: String) {
         val t = text.trim()
         if (t.isEmpty()) return
-        if (!connected.value) {
-            addSystem("⚠️ Pehle connect karo!")
+        if (!connected) {
+            addSystem("⚠️ Pehle NVIDIA API key daalo aur 'DIMAAG ON KARO' dabao!")
+            return
+        }
+        if (brainBusy) {
+            addSystem("⏳ Pichla kaam abhi chal raha hai — thoda ruko...")
             return
         }
         addMsg(Role.USER, t)
-        socket.send(JSONObject().put("type", "chat").put("text", t))
-    }
-
-    // ---------------- socket messages ----------------
-
-    private fun onSocketMessage(msg: JSONObject) {
-        when (msg.optString("type")) {
-            "chat" -> if (msg.optBoolean("done")) addMsg(Role.AGENT, msg.optString("message"))
-            "progress" -> addMsg(Role.SYSTEM, msg.optString("text"))
-            "tts" -> {
-                val t = msg.optString("text")
-                tts?.speak(t, TextToSpeech.QUEUE_FLUSH, null, "piyushos")
-            }
-            "clipboard" -> {
-                val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                cm.setPrimaryClip(ClipData.newPlainText("PiyushOS", msg.optString("text")))
-                addSystem("📋 Text clipboard par copy ho gaya — jahan chaho wahan paste karo!")
-            }
-            "file" -> handleFile(msg)
-            "cmd" -> handleCmd(msg)
-            "hello_ack" -> addSystem("✅ Connect ho gaya (${msg.optString("device_id")})")
-            "error" -> addSystem("⚠️ ${msg.optString("message")}")
-        }
-    }
-
-    private fun handleFile(msg: JSONObject) {
-        val name = msg.optString("name")
-        val mime = msg.optString("mime", "application/octet-stream")
-        val b64 = msg.optString("b64")
-        scope.launch {
-            val uri = FileSaver.saveFile(this@MainActivity, name, mime, b64)
-            addSystem("📄 $name save ho gaya → Downloads/PiyushOS folder")
-            if (uri != null) Notifier.notifyFile(this@MainActivity, uri, name, mime)
-            else addSystem("⚠️ $name save nahi ho paya")
-        }
-    }
-
-    private fun handleCmd(msg: JSONObject) {
-        val id = msg.optString("id")
-        val action = msg.optString("action")
-        val payload = msg.optJSONObject("payload") ?: JSONObject()
-        val svc = PhoneControllerService.instance
-        if (svc == null) {
-            socket.sendCmdAck(
-                id, false,
-                JSONObject().put("error", "Accessibility service on nahi hai — app me 'Enable Accessibility' dabao aur list me PiyushOS ko ON karo.")
-            )
-            return
-        }
-        scope.launch {
-            val data = JSONObject()
-            var ok = true
+        brainBusy = true
+        val key = apiKey.value.trim()
+        scope.launch(Dispatchers.IO) {
             try {
-                when (action) {
-                    "open_app" -> {
-                        val app = payload.optString("app")
-                        if (svc.openApp(app)) data.put("opened", app)
-                        else {
-                            ok = false
-                            data.put("error", "App '$app' phone par nahi mili")
-                        }
-                    }
-                    "tap" -> svc.tap(payload.optInt("x"), payload.optInt("y"))
-                    "double_tap" -> svc.doubleTap(payload.optInt("x"), payload.optInt("y"))
-                    "long_press" -> svc.longPress(payload.optInt("x"), payload.optInt("y"))
-                    "swipe" -> svc.swipe(payload.optString("direction", "up"), payload.optInt("amount", 50))
-                    "input_text" -> {
-                        val text = payload.optString("text")
-                        if (!svc.typeText(text)) {
-                            ok = false
-                            data.put("error", "Text box focus nahi mila — pehle input field par tap karo")
-                        }
-                    }
-                    "back" -> svc.back()
-                    "home" -> svc.home()
-                    "recent_apps" -> svc.recentApps()
-                    "open_notifications" -> svc.openNotifications()
-                    "screenshot" -> {
-                        val bmp = ProjectionService.capture()
-                        if (bmp == null) {
-                            ok = false
-                            data.put("error", "Screenshot permission nahi hai — app me 'Enable Screenshots' dabao")
-                        } else {
-                            data.put(
-                                "image_b64",
-                                android.util.Base64.encodeToString(FileSaver.pngBytes(bmp), android.util.Base64.NO_WRAP)
-                            ).put("width", bmp.width).put("height", bmp.height)
-                        }
-                    }
-                    "screen" -> {
-                        // UI tree + screenshot (+ OCR agar tree sparse hai) — GUI agent ke liye
-                        val tree = svc.screenTree()
-                        data.put("tree", tree)
-                        val bmp = ProjectionService.capture()
-                        if (bmp != null) {
-                            data.put(
-                                "image_b64",
-                                android.util.Base64.encodeToString(FileSaver.pngBytes(bmp), android.util.Base64.NO_WRAP)
-                            ).put("width", bmp.width).put("height", bmp.height)
-                            val textNodes = Regex("\"t\":").findAll(tree).count()
-                            if (textNodes < 6) {
-                                val ocr = ScreenOcr.ocr(bmp)
-                                if (ocr.isNotEmpty()) data.put("ocr", ocr)
+                com.piyushos.app.ai.AgentBrain(
+                    context = this@MainActivity,
+                    apiKey = key,
+                    onProgress = { msg -> scope.launch { addSystem(msg) } },
+                    onFile = { name, mime, file ->
+                        scope.launch {
+                            try {
+                                val b64 = android.util.Base64.encodeToString(
+                                    file.readBytes(), android.util.Base64.NO_WRAP
+                                )
+                                val uri = FileSaver.saveFile(this@MainActivity, name, mime, b64)
+                                if (uri != null) {
+                                    Notifier.notifyFile(this@MainActivity, uri, name, mime)
+                                    addSystem("📄 $name save ho gaya → Downloads/PiyushOS folder")
+                                } else {
+                                    addSystem("⚠️ $name save nahi ho paya")
+                                }
+                            } catch (e: Exception) {
+                                addSystem("⚠️ $name save me galti: ${e.message}")
                             }
-                        } else {
-                            data.put("no_screenshot", true)
                         }
-                    }
-                    "wait" -> Thread.sleep((payload.optDouble("seconds", 1.0) * 1000).toLong())
-                    else -> {
-                        ok = false
-                        data.put("error", "Unknown action: $action")
-                    }
+                    },
+                    onClipboard = { clip ->
+                        scope.launch {
+                            try {
+                                val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                cm.setPrimaryClip(ClipData.newPlainText("PiyushOS", clip))
+                                addSystem("📋 Text clipboard par copy ho gaya — jahan chaho wahan paste karo!")
+                            } catch (_: Exception) {}
+                        }
+                    },
+                    onFinal = { final ->
+                        scope.launch {
+                            addMsg(Role.AGENT, final)
+                            if (final.length < 600) {
+                                try {
+                                    tts?.speak(final, TextToSpeech.QUEUE_FLUSH, null, "piyushos")
+                                } catch (_: Exception) {}
+                            }
+                            brainBusy = false
+                        }
+                    },
+                ).handleUser(t)
+            } catch (e: Throwable) {
+                scope.launch {
+                    addMsg(Role.AGENT, "😵 AI se baat karne me problem aayi: ${e.message}")
+                    brainBusy = false
                 }
-            } catch (e: Exception) {
-                ok = false
-                data.put("error", e.message ?: "galti")
             }
-            socket.sendCmdAck(id, ok, data)
         }
     }
 
@@ -328,8 +258,8 @@ class MainActivity : ComponentActivity() {
             listening.value = false
             return
         }
-        if (!connected.value) {
-            addSystem("⚠️ Pehle connect karo!")
+        if (!connected) {
+            addSystem("⚠️ Pehle NVIDIA API key daalo aur 'DIMAAG ON KARO' dabao!")
             return
         }
         if (recognizer == null) {

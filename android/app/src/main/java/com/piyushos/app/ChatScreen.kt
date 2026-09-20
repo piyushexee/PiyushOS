@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -55,9 +56,7 @@ private val RedText = Color(0xFFEF5350)
 @Composable
 fun ChatScreen(
     connected: Boolean,
-    host: String, onHost: (String) -> Unit,
-    port: String, onPort: (String) -> Unit,
-    token: String, onToken: (String) -> Unit,
+    apiKey: String, onApiKey: (String) -> Unit,
     messages: List<ChatMsg>,
     listening: Boolean,
     crash: String?,
@@ -90,11 +89,11 @@ fun ChatScreen(
             )
             Spacer(Modifier.weight(1f))
             if (connected) {
-                Text("● Online", color = GreenText, fontSize = 13.sp)
+                Text("● In-app Brain", color = GreenText, fontSize = 13.sp)
                 Spacer(Modifier.width(4.dp))
-                TextButton(onClick = onDisconnect) { Text("Disconnect", color = RedText) }
+                TextButton(onClick = onDisconnect) { Text("Key Reset", color = RedText) }
             } else {
-                Text("○ Offline", color = RedText, fontSize = 13.sp)
+                Text("○ Dimaag OFF", color = RedText, fontSize = 13.sp)
             }
         }
 
